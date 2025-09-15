@@ -16,7 +16,7 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from chatbot import views  # make sure 'chatbot' matches your app folder name
 from chatbot.views import home, get_response  # adjust as needed
 from django.conf import settings
@@ -24,6 +24,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include('chatbot.urls')),
     path('get_response/', views.get_response, name='get_response'),  # make sure this view exists
     path('', views.home, name='home'),  # Optional: chatbot homepage
 ]
