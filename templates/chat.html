@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>College Chatbot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(to right, #74ebd5, #acb6e5);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .chat-container {
+            max-width: 500px;
+            margin: 80px auto;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .chat-header {
+            background: #ffffff40;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+
+        .chat-body {
+            padding: 15px;
+            height: 350px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-footer {
+            padding: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .form-control {
+            border-radius: 20px;
+        }
+
+        .btn-send, .btn-mic {
+            border-radius: 20px;
+        }
+
+        .chat-bubble {
+            background: #ffffffb8;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            max-width: 80%;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .chat-bubble.user {
+            background-color: #d1e7dd;
+            align-self: flex-end;
+        }
+
+        .chat-bubble.bot {
+            background-color: #f8d7da;
+            align-self: flex-start;
+        }
+
+        .chat-bubble .avatar {
+            width: 25px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        .typing-indicator {
+            font-style: italic;
+            color: #777;
+            margin-bottom: 5px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container chat-container">
+    <div class="chat-header">
+        <h3>🎓 College Chatbot</h3>
+        <p class="text-muted mb-0">Ask about admissions, exams, hostel, library & more!</p>
+    </div>
+    <div class="chat-body" id="chat-box">
+        <div class="chat-bubble bot">
+            <img src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" class="avatar" />
+            <strong>Bot:</strong> 👋 Hello! How can I help you today?
+        </div>
+    </div>
+    <div class="chat-footer">
+        <div class="input-group">
+            <input type="text" id="user-input" class="form-control" placeholder="Type or speak your message..." />
+            <button class="btn btn-secondary btn-mic ms-2" onclick="startListening()">🎤</button>
+            <button class="btn btn-primary btn-send ms-2" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+</div>
+
+<!-- Sounds -->
+<audio id="send-sound" src="https://www.myinstants.com/media/sounds/message-sent.mp3"></audio>
+<audio id="receive-sound" src="https://www.myinstants.com/media/sounds/pop-up-kortal.mp3"></audio>
+
+<script>
+function sendMessage() {
+    const input = document.getElementById("user-input");
+    const chatBox = document.getElementById("chat-box");
+    const userMessage = input.value.trim();
+
+    if (!userMessage) return;
+
+    const userBubble = document.createElement("div");
+    userBubble.className = "chat-bubble user";
+    userBubble.innerHTML = `<strong>You:</strong> ${userMessage}`;
+    chatBox.appendChild(userBubble);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    input.value = "";
+
+    document.getElementById("send-sound").play();
+
+    const typing = document.createElement("div");
+    typing.className = "typing-indicator bot";
+    typing.id = "typing";
+    typing.innerHTML = `<img src="https://i.gifer.com/ZZ5H.gif" width="25"> Bot is typing...`;
+    chatBox.appendChild(typing);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    fetch(`/get_response/?message=${encodeURIComponent(userMessage)}`)
+        .then(response => response.json())
+        .then(data => {
+            typing.remove();
+
+            const botBubble = document.createElement("div");
+            botBubble.className = "chat-bubble bot";
+            botBubble.innerHTML = `
+                <img src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" class="avatar" />
+                <strong>Bot:</strong> ${data.reply}`;
+            chatBox.appendChild(botBubble);
+
+            document.getElementById("receive-sound").play();
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+}
+
+// 🎤 Voice Input
+function startListening() {
+    if (!('webkitSpeechRecognition' in window)) {
+        alert("Sorry, your browser doesn't support voice recognition.");
+        return;
+    }
+
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+        console.log("Voice recognition started");
+    };
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById("user-input").value = transcript;
+        sendMessage();
+    };
+
+    recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+    };
+
+    recognition.start();
+}
+</script>
+
+</body>
+</html>
