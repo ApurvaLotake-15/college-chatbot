@@ -15,20 +15,16 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+# college_chatbot/urls.py
 from django.contrib import admin
 from django.urls import path, include
-from chatbot import views  # make sure 'chatbot' matches your app folder name
-from chatbot.views import home, get_response  # adjust as needed
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('chatbot.urls')),
-    path('get_response/', views.get_response, name='get_response'),  # make sure this view exists
-    path('', views.home, name='home'),  # Optional: chatbot homepage
 ]
 
-# Serve media files during development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
